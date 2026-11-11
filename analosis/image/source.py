@@ -56,10 +56,12 @@ class Source:
         magnitude = absolute_magnitude + 5 * np.log10(D) + 25 # 25 = log10(Mpc/10pc)
 
         # position
-        r_max = min(R_sersic, maximum_source_offset_factor * Einstein_radius) #PFmod
-        r_sq_max = r_max**2 #[arcsec^2]
-        r_sq = np.random.uniform(0, r_sq_max)
-        r = np.sqrt(r_sq)
+        # offset capped only by the Einstein radius (removed the source-size cap
+        # so large u values are possible for arcs / multiple-image classes)
+        r_max = maximum_source_offset_factor * Einstein_radius
+        # draw r uniformly (not r^2) so u is spread evenly from 0 to the max,
+        # giving balanced numbers of rings, arcs and multiple images
+        r = np.random.uniform(0, r_max)
         phi = np.random.uniform(0, 2*np.pi)
         x = lens_mass_centre['x'] + r * np.cos(phi)
         y = lens_mass_centre['y'] + r * np.sin(phi)

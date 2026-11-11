@@ -232,6 +232,10 @@ class Image:
                 image_settings, kwargs_sl[i]
             )
 
+            # non-lens option: remove the background source entirely
+            if image_settings.get('source', True) == False:
+                source_model_list, kwargs_source = [], []
+
             kwargs_source_mag = deepcopy(kwargs_source)
             source_model_list_truth = list(source_model_list)
 
@@ -243,8 +247,8 @@ class Image:
                 kwargs_model = {'lens_model_list': lens_model_list,
                                 'source_light_model_list': source_model_list}
 
-            # always having lens light now
-            kwargs_lens_light = [kwargs_ll[i]]
+            # lens light only passed in when it is switched on
+            kwargs_lens_light = [kwargs_ll[i]] if image_settings['lens_light'] == True else []
 
 
             if image_settings['fixed_numpix'] == True:

@@ -24,7 +24,7 @@ LOS         = ['#a6dba0','#5aae61','#1b7837']
 LOS_minimal = ['#c2a5cf', '#9970ab', '#762a83']
 
 # Use TeX
-rc('text', usetex=True)
+rc('text', usetex=False)
 rc('font', family='serif')
 matplotlib.rcParams.update({'font.size': 18})
 
@@ -98,7 +98,7 @@ class Plots:
         infile.close()
 
         cmap_string = 'bone'
-        cmap = copy.copy(matplotlib.cm.get_cmap(cmap_string))
+        cmap = copy.copy(matplotlib.colormaps[cmap_string])
         cmap.set_bad(color='k', alpha=1.)
         cmap.set_under('k')
 
@@ -410,7 +410,7 @@ class Plots:
                     colors = color, shade = True, shade_gradient = 0.4,
                     bar_shade = True, linewidths = [3.0],
                     tick_font_size=18, label_font_size=18,
-                    usetex = True, serif = True)
+                    usetex=False, serif = True)
 
         fig = c.plotter.plot(truth=expected_values, figsize = size)
 
@@ -492,7 +492,7 @@ class Plots:
                     colors = color, shade = True, shade_gradient = 0.4,
                     bar_shade = True, linewidths = [3.0],
                     tick_font_size=18, label_font_size=18,
-                    usetex = True, serif = True)
+                    usetex=False, serif = True)
 
         fig = c.plotter.plot(truth=expected_values, figsize = size)
 
