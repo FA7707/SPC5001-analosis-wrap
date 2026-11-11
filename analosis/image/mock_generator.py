@@ -29,7 +29,8 @@ class Mocks:
                  truth_model='composite',
                  a4_max=0.05,
                  sigma_halo_offset=300, # pc
-                 maximum_source_offset_factor=1, # in units of source half-light radius
+                 maximum_source_offset_factor=1, # in units of Einstein radius
+                 minimum_source_offset_factor=0, # in units of Einstein radius
                  telescope = 'HST',
                  band = 'F115W'
                  ):
@@ -50,6 +51,7 @@ class Mocks:
         self.a4_max = a4_max
         self.sigma_halo_offset = sigma_halo_offset
         self.maximum_source_offset_factor = maximum_source_offset_factor
+        self.minimum_source_offset_factor = minimum_source_offset_factor
         self.telescope = telescope
         self.band = band
 
@@ -141,6 +143,7 @@ class Mocks:
             # source
             source = Source(redshifts, distances, self.util,
                             maximum_source_offset_factor=self.maximum_source_offset_factor,
+                            minimum_source_offset_factor=self.minimum_source_offset_factor,
                             min_aspect_ratio_source = self.min_aspect_ratio_source,
                             telescope = self.telescope,
                             band = self.band,

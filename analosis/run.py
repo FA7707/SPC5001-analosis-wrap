@@ -50,6 +50,7 @@ class Run:
             a4_max=self.image_settings.get('a4_max', 0.05),
             sigma_halo_offset=self.image_settings['sigma_halo_offset'],
             maximum_source_offset_factor=self.image_settings['maximum_source_offset_factor'],
+            minimum_source_offset_factor=self.image_settings.get('minimum_source_offset_factor', 0),
             telescope = self.image_settings['telescope'],
             band = self.image_settings['band'])
 

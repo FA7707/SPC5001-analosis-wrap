@@ -14,6 +14,7 @@ class Source:
                  distances,
                  util,
                  maximum_source_offset_factor=1,
+                 minimum_source_offset_factor=0,
                  min_aspect_ratio_source = 0.9,
                  telescope = 'JWST',
                  band = 'F115W',
@@ -56,12 +57,15 @@ class Source:
         magnitude = absolute_magnitude + 5 * np.log10(D) + 25 # 25 = log10(Mpc/10pc)
 
         # position
-        # offset capped only by the Einstein radius (removed the source-size cap
-        # so large u values are possible for arcs / multiple-image classes)
+        # offset drawn between a minimum and maximum, both in units of the
+        # Einstein radius, so u = offset / Einstein radius lies in [min, max]
+        # (removed the source-size cap so large u values are possible)
+        if minimum_source_offset_factor > maximum_source_offset_factor:
+            raise ValueError('minimum_source_offset_factor must not be larger than maximum_source_offset_factor.')
+        r_min = minimum_source_offset_factor * Einstein_radius
         r_max = maximum_source_offset_factor * Einstein_radius
-        # draw r uniformly (not r^2) so u is spread evenly from 0 to the max,
-        # giving balanced numbers of rings, arcs and multiple images
-        r = np.random.uniform(0, r_max)
+        # draw r uniformly (not r^2) so u is spread evenly across the range
+        r = np.random.uniform(r_min, r_max)
         phi = np.random.uniform(0, 2*np.pi)
         x = lens_mass_centre['x'] + r * np.cos(phi)
         y = lens_mass_centre['y'] + r * np.sin(phi)
