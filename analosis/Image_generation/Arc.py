@@ -10,7 +10,7 @@ random.seed(123)
 cosmology = {'id': 'planck18', 'H0': 67.4, 'Om': 0.315}
 
 image_settings = {'generate_image': True,
-                  'number_of_images': 24,
+                  'number_of_images': 100,
                   'image_name': 'Arc_lens',
                   'lens_light': True,
                   'source': True, # False = no background galaxy (non-lens images)
@@ -45,5 +45,5 @@ path = result.pathfinder()
 from analosis.analysis.plots import Plots
 p = Plots(cosmology, path)
 
-p.image_plot(path, image_settings, number_of_columns=8, u_max=10, save=False, show=True)
+p.image_plot(path, image_settings, number_of_columns=8, u_max=10, save=False, show=False)
 
