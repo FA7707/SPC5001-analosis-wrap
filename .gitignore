@@ -138,3 +138,4 @@ dmypy.json
 *.npy
 analosis/results/images/
 analosis/results/Cleaned_datasets/
+!analosis/evaluation/*.csv

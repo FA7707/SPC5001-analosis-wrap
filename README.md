@@ -83,3 +83,4 @@ After editing any `.py` file in `analosis`, **restart the notebook kernel**, bec
 - [ ] Class labelling for rings / arcs / multiple images
 - [ ] Balanced dataset generation and export
 - [ ] CNN and ViT training and evaluation
+!analosis/evaluation/*.csv
