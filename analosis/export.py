@@ -3,8 +3,8 @@ import pickle
 import numpy as np
 import os
 
-csv = ["results/datasets/Arc_lens_input_kwargs.csv", "results/datasets/Non_lens_input_kwargs.csv", "results/datasets/Ring_input_kwargs.csv"]
-path = ["results/datasets/Arc_lens_image_list.pickle", "results/datasets/Non_lens_image_list.pickle", "results/datasets/Ring_image_list.pickle"]
+csv = ["results/datasets/Arc_lens_input_kwargs.csv", "results/datasets/Non_lens_input_kwargs.csv", "results/datasets/Ring_input_kwargs.csv", "results/datasets/Multi_lens_input_kwargs.csv"]
+path = ["results/datasets/Arc_lens_image_list.pickle", "results/datasets/Non_lens_image_list.pickle", "results/datasets/Ring_image_list.pickle", "results/datasets/Multi_lens_image_list.pickle"]
 
 data = {}
 stored_key = []
@@ -60,7 +60,8 @@ class_()
 df1 = data['Ring'][['Filename', 'Class', 'u_value', 'theta_E']]
 df2 = data['Arc_lens'][['Filename', 'Class', 'u_value', 'theta_E']]
 df3 = data['Non_lens'][['Filename', 'Class', 'u_value', 'theta_E']]
+df4 = data['Multi_lens'][['Filename', 'Class', 'u_value', 'theta_E']]
 df3[['u_value','theta_E']] = np.nan
-frames = [df1, df2, df3]
+frames = [df1, df2, df3,df4]
 result = pd.concat(frames, ignore_index=True)
 result.to_csv("results/Cleaned_datasets/labels.csv", index=False)
