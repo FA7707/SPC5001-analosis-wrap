@@ -35,7 +35,7 @@ class Baryons():
             self.mass, mean_mass, R_sersic, magnitude = util.mstar_from_catalogue(band, index)
         else:
             # orders of magnitude freely inspired from https://arxiv.org/abs/1904.10992
-            mean_mass = 2e11
+            mean_mass = 1e11
             # this ensures that 95% of the events have a mass that is at most
             # a factor two larger or smaller than the mean mass.
             self.mass = np.random.lognormal(np.log(mean_mass), np.log(2)/2)
