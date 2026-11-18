@@ -64,4 +64,5 @@ df4 = data['Multi_lens'][['Filename', 'Class', 'u_value', 'theta_E']]
 df3[['u_value','theta_E']] = np.nan
 frames = [df1, df2, df3,df4]
 result = pd.concat(frames, ignore_index=True)
+os.makedirs("results/Cleaned_datasets", exist_ok=True)
 result.to_csv("results/Cleaned_datasets/labels.csv", index=False)

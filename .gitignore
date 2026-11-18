@@ -133,3 +133,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# SPC5001 generated dataset (recreate with export.py)
+*.npy
+analosis/results/images/
+analosis/results/Cleaned_datasets/
