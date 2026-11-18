@@ -1,8 +1,10 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import pandas as pd
+from sklearn import metrics
 BLUE, ORANGE, GREY = "#2a78d6", "#eb6834", "#52514e"
 
 df = pd.read_csv("../results/Cleaned_datasets/labels.csv")
@@ -14,8 +16,12 @@ for i in df['Filename']:
 
 y = np.array(df.Class.map(class_))
 X_prescaled = np.stack(images)
-
-noise = np.std(X_prescaled[:, :10, : 10])    
+path = "../evaluation"
+os.makedirs(path, exist_ok=True)
+noise = np.std(X_prescaled[:, :10, : 10])
+df_noise = pd.DataFrame()
+df_noise['Noise'] = [noise]
+df_noise.to_csv(os.path.join(path,'noise.csv'), index=False)  
 scaled = X_prescaled / noise
 stretched = np.arcsinh(scaled)
 m = stretched.mean(axis=(1, 2), keepdims=True)
@@ -68,7 +74,6 @@ def train_model(model, optimiser, loss_fn, n_epochs, batch_size=32):
             optimiser.zero_grad()# TODO: clear the old gradients
             J.backward()# TODO: do backprop from J
             optimiser.step()# TODO: update the weights and biases
-
         with torch.no_grad():                         # end of epoch: measure, don't train
             J_train.append(loss_fn(model(X_train_t), y_train_t).item())
             J_val.append(loss_fn(model(X_val_t), y_val_t).item())
@@ -77,16 +82,17 @@ def train_model(model, optimiser, loss_fn, n_epochs, batch_size=32):
     return J_train, J_val, acc_train, acc_val
 
 def plot_curves(J_train, J_val, acc_train, acc_val, title=""):
-    """Cost (left) and accuracy (right) on the training and validation sets, against epoch."""
     fig, axs = plt.subplots(1, 2, figsize=(12, 4))
     axs[0].plot(J_train, color=BLUE, lw=2, label="training")
     axs[0].plot(J_val, color=ORANGE, lw=2, label="validation")
     axs[0].set_xlabel("epoch"); axs[0].set_ylabel("cost $J$"); axs[0].set_ylim(bottom=0); axs[0].legend()
     axs[1].plot(100 * np.array(acc_train), color=BLUE, lw=2, label="training")
     axs[1].plot(100 * np.array(acc_val), color=ORANGE, lw=2, label="validation")
-    axs[1].axhline(50, color=GREY, ls=":", lw=1); axs[1].text(len(acc_val) - 1, 47, "guessing", ha="right", va="top", color=GREY)
-    axs[1].set_xlabel("epoch"); axs[1].set_ylabel("accuracy (%)"); axs[1].set_ylim(30, 102); axs[1].legend()
-    fig.suptitle(title); plt.tight_layout(); plt.show()
+    axs[1].axhline(25, color=GREY, ls=":", lw=1); axs[1].text(len(acc_val) - 1, 30, "guessing", ha="right", va="top", color=GREY)
+    axs[1].set_xlabel("epoch"); axs[1].set_ylabel("accuracy (%)"); axs[1].set_ylim(20, 102); axs[1].legend()
+    fig.suptitle(title); plt.tight_layout()
+    plt.savefig(os.path.join(path,'Cost curve.png'), dpi=300)
+    plt.show()
 
 def count_parameters(model):
     """Total number of weights and biases in the model."""
@@ -112,7 +118,39 @@ cnn = nn.Sequential(block1, block2, block3, nn.AdaptiveMaxPool2d(3), nn.Flatten(
 optimiser = torch.optim.Adam(cnn.parameters(), lr=0.002)
 # TODO: fill in train_model footprint to train the model with 100 epochs
 J_train, J_val, acc_train, acc_val = train_model(cnn, optimiser, nn.CrossEntropyLoss(), n_epochs = 100)
+df_values = pd.DataFrame()
+df_values['J_train'] = J_train
+df_values['J_val'] = J_val
+df_values['acc_train'] = acc_train
+df_values['acc_val'] = acc_val
+df_values.to_csv(os.path.join(path,'Model_values.csv'), index=False)
 
 print(f"final training cost {J_train[-1]:.3f},  final validation cost {J_val[-1]:.3f}")
 print(f"final training accuracy {acc_train[-1]:.3f},  final validation accuracy {acc_val[-1]:.3f}")
 plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({count_parameters(cnn)} parameters)")
+torch.save(cnn.state_dict(), os.path.join(path,'Model_weights.pt'))
+
+def matrix():
+    
+    with torch.no_grad():
+        y_pred = (cnn(X_val_t).numpy().argmax(axis = 1))
+    actual = y_val
+    predicted = y_pred
+    confusion_matrix = metrics.confusion_matrix(actual, predicted)
+
+    df_matrix_values = pd.DataFrame()
+    df_matrix_values['Actual'] = actual
+    df_matrix_values['Predicted'] = predicted
+    df_matrix_values.to_csv(os.path.join(path,'Matrix_values.csv'), index=False)
+    
+    fig, ax = plt.subplots(figsize=(6, 5)) 
+    cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix = confusion_matrix, display_labels = ['Ring', 'Arc_lens', 'Multi_lens', 'Non_lens'])
+    cm_display.plot(ax=ax)
+    ax.set_title("CNN confusion matrix (validation set)", fontsize=14, pad=12)
+    ax.set_xlabel("Predicted label", labelpad=10)
+    ax.set_ylabel("True label", labelpad=10)
+    plt.tight_layout()
+    plt.savefig(os.path.join(path,'CNN Confusion Matrix.png'), dpi=300)
+    plt.show()
+    
+matrix()
