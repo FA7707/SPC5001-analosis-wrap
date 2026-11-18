@@ -1,0 +1,17 @@
+# notebooks
+jupyterlab
+ipykernel
+
+# analosis dependencies
+astropy
+chainconsumer<1.0
+colossus
+emcee
+h5py
+lenstronomy==1.14.0
+matplotlib
+numpy
+pandas
+scipy
+seaborn
+tqdm

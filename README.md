@@ -50,8 +50,7 @@ These boundaries are approximate and also depend on lens ellipticity and source 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install jupyterlab ipykernel
-pip install astropy "chainconsumer<1.0" colossus emcee h5py "lenstronomy==1.14.0" matplotlib numpy pandas scipy seaborn tqdm
+pip install -r requirements.txt
 ```
 
 **Version notes:**
