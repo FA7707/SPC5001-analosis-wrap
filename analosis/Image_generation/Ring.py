@@ -10,7 +10,7 @@ random.seed(1)
 cosmology = {'id': 'planck18', 'H0': 67.4, 'Om': 0.315}
 
 image_settings = {'generate_image': True,
-                  'number_of_images': 1,
+                  'number_of_images': 5,
                   'image_name': 'Ring',
                   'lens_light': True,
                   'source': True, # False = no background galaxy (non-lens images)
