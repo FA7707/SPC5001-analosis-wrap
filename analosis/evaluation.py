@@ -13,19 +13,33 @@ from sklearn import metrics
 import os
 
 cosmology = {'id': 'planck18', 'H0': 67.4, 'Om': 0.315}
-st.title("Testing model")                                  
+st.markdown("<h1 style='text-align: center;'>Testing model</h1>", unsafe_allow_html=True)
 
-ring = st.number_input("Number of ring images", min_value=20, max_value=10000, value=20)
-ring_seed= st.number_input("Ring seed", value=5)
+st.subheader("Telescope")
+telescope = st.segmented_control("", ["Roman", "JWST", "HST"], default="Roman", required=True, label_visibility="collapsed")
+st.divider()
 
-arc_lens= st.number_input("Number of arc images", min_value=20, max_value=10000, value=20)
-arc_lens_seed= st.number_input("Arc seed", value=2)
+st.subheader("Dataset")
+ring_col, arc_col, multiple_col, non_col = st.columns(4)
+with ring_col:
+    st.markdown("**Ring**")
+    ring = st.number_input("Images", key="Ring1", min_value=20, max_value=10000, value=20)
+    ring_seed= st.number_input("Seed", key="Ring2", value=5)
+    
+with arc_col:
+    st.markdown("**Arc**")
+    arc_lens= st.number_input("Images", key="Arc1", min_value=20, max_value=10000, value=20)
+    arc_lens_seed= st.number_input("Seed", key="Arc2", value=2)
+    
+with multiple_col:
+    st.markdown("**Multiple**")
+    multiple_lens = st.number_input("Images", key="Multiple1", min_value=20, max_value=10000, value=20)
+    multiple_lens_seed = st.number_input("Seed", key="Multiple2", value=3)
 
-multiple_lens = st.number_input("Number of multiple lens images", min_value=20, max_value=10000, value=20)
-multiple_lens_seed = st.number_input("Multiple lens seed", value=3)
-
-non_lens= st.number_input("Number of non lens images", min_value=20, max_value=10000, value=20)
-non_lens_seed= st.number_input("Non lens seed", value=4)
+with non_col:
+    st.markdown("**Non lens**")
+    non_lens= st.number_input("Images", key="Non lens1", min_value=20, max_value=10000, value=20,)
+    non_lens_seed= st.number_input("Seed", key="Non lens2", value=4)
 
 def generate (lens, number_of_images, seed):
     np.random.seed(seed)
@@ -39,7 +53,7 @@ def generate (lens, number_of_images, seed):
                   'source': True, # False = no background galaxy (non-lens images)
                   'truth_model': 'boxydisky',
                   'a4_max': 0.1,
-                  'telescope': 'HST',
+                  'telescope': telescope,
                   'band': None,
                   'maximum_shear': 0.025, # any larger means gamma_LOS > 0.05 which is challenging for the MCMC
                   'Einstein_radius_min': 0.5, # arcsec
@@ -59,7 +73,7 @@ def generate (lens, number_of_images, seed):
                   'source': True, # False = no background galaxy (non-lens images)
                   'truth_model': 'boxydisky',
                   'a4_max': 0.1,
-                  'telescope': 'HST',
+                  'telescope': telescope,
                   'band': None,
                   'maximum_shear': 0.025, # any larger means gamma_LOS > 0.05 which is challenging for the MCMC
                   'Einstein_radius_min': 0.5, # arcsec
@@ -79,7 +93,7 @@ def generate (lens, number_of_images, seed):
                   'source': True, # False = no background galaxy (non-lens images)
                   'truth_model': 'boxydisky',
                   'a4_max': 0.1,
-                  'telescope': 'HST',
+                  'telescope': telescope,
                   'band': None,
                   'maximum_shear': 0.025, # any larger means gamma_LOS > 0.05 which is challenging for the MCMC
                   'Einstein_radius_min': 0.5, # arcsec
@@ -99,7 +113,7 @@ def generate (lens, number_of_images, seed):
                   'source': False, # False = no background galaxy (non-lens images)
                   'truth_model': 'boxydisky',
                   'a4_max': 0.1,
-                  'telescope': 'HST',
+                  'telescope': telescope,
                   'band': None,
                   'maximum_shear': 0.025, # any larger means gamma_LOS > 0.05 which is challenging for the MCMC
                   'Einstein_radius_min': 0.5, # arcsec
@@ -145,7 +159,7 @@ def matrix():
     plt.savefig(os.path.join(path,'CNN Confusion Matrix test.png'), dpi=300)
     st.pyplot(fig)
 
-if st.button("Test"):
+if st.button("Test", type="primary", width="stretch"):
     with st.spinner("Generating Einstein rings"):
         generate ('Ring', ring, ring_seed)
     with st.spinner("Generating Arc lenses"):
@@ -218,6 +232,7 @@ if st.button("Test"):
     with torch.no_grad():
         out = cnn(data.to(device))                          
     preds = out.cpu().numpy().argmax(axis=1)
+    st.divider()
     matrix()
     
     class_ = ['Ring', 'Arc_lens', 'Multi_lens', 'Non_lens']
@@ -226,13 +241,9 @@ if st.button("Test"):
     precision = metrics.precision_score(y, preds, average=None)
     recall = metrics.recall_score(y, preds, average=None)
     f1 = metrics.f1_score(y, preds, average=None)
+    
+    st.divider()
 
-    st.metric("Accuracy achieved:",f"{accuracy:.1%}")
-
-    for i, team in enumerate(class_):  
-        st.subheader(team)
-        col1, col2, col3 = st.columns(3)            
-        col1.metric("Precision achieved:",f"{precision[i]:.1%}")
-        col2.metric("Recall achieved:",f"{recall[i]:.1%}")
-        col3.metric("F1 score achieved:",f"{f1[i]:.1%}")
-
+    st.markdown(f"**Accuracy:** {accuracy * 100:.1f}%")
+    results = pd.DataFrame({"Precision": precision, "Recall": recall, "F1 score": f1}, index=["Ring", "Arc_lens", "Multi_lens", "Non_lens"])
+    st.dataframe((results * 100).round(1))

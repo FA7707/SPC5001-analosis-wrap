@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import random
+import copy
 from copy import deepcopy
 
 from lenstronomy.ImSim.image_model import ImageModel
@@ -10,6 +11,7 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from lenstronomy.SimulationAPI.ObservationConfig.HST import HST
 from lenstronomy.SimulationAPI.ObservationConfig.JWST import JWST
+from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 
 class Image:
 
@@ -195,22 +197,44 @@ class Image:
 
         psf = 'GAUSSIAN'
 
-        if image_settings['telescope'] == 'HST':
+        if image_settings['telescope'] == 'Roman':  
+            # telescope settings for Roman telescope
+            Roman_r = Roman(band='F158', psf_type=psf, survey_mode='wide_area')
+            Roman_g = Roman(band='F129', psf_type=psf, survey_mode='wide_area')
+            Roman_b = Roman(band='F106', psf_type=psf, survey_mode='wide_area')
+            roman = [Roman_r, Roman_g, Roman_b]
+            roman_band= []
+
+            for i in roman:   
+                pixel_size = i.camera['pixel_scale']
+                roman_band.append(i.kwargs_single_band())
+
+                
+            kwargs_psf = {'psf_type': psf,'fwhm': roman_band[0]['seeing'],'pixel_size': pixel_size,'truncation': 3}
+        
+
+        elif image_settings['telescope'] == 'HST':
             # telescope settings (HST)
             band = HST(band='WFC3_F160W', psf_type=psf)
             kwargs_band = band.kwargs_single_band()
-            pixel_size = band.camera['pixel_scale'] # in arcsec
+            pixel_size = band.camera['pixel_scale'] 
+
+            kwargs_psf = {'psf_type': psf,
+                          'fwhm': kwargs_band['seeing'],
+                          'pixel_size': pixel_size,
+                          'truncation': 3}
+            
         elif image_settings['telescope'] == 'JWST':
             band = JWST(band='F115W', psf_type=psf)
             kwargs_band = band.kwargs_single_band()
             pixel_size = band.camera['pixel_scale']
-        else:
-            raise ValueError('Unknown telescope.')
 
-        kwargs_psf = {'psf_type': psf,
+            kwargs_psf = {'psf_type': psf,
                           'fwhm': kwargs_band['seeing'],
                           'pixel_size': pixel_size,
                           'truncation': 3}
+        else:
+            raise ValueError('Unknown telescope.')
 
         # numerics
         kwargs_numerics = {'supersampling_factor': 1,
@@ -263,45 +287,80 @@ class Image:
                 raise Warning("image_settings['fixed_numpix'] should be True or False.")
 
             # simulation API
-            sim = SimAPI(numpix=numpix,
-                         kwargs_single_band=kwargs_band,
-                         kwargs_model=kwargs_model)
+            if image_settings['telescope'] == 'Roman':
+                band_images = []
+                lens_offset = [-0.5, 0, 0.5]
+                source_offset = [0.5, 0, -0.5]
+                
+                lens_light_mag = copy.deepcopy(kwargs_lens_light) # backup of kwargs_lens_light as it will be overwritten magnitude2amplitude
+                source_mag = copy.deepcopy(kwargs_source) # backup of kwargs_source as it will be overwritten by magnitude2amplitude
+                
+                for b, band in enumerate(roman_band):
+                    lens_copy = copy.deepcopy(lens_light_mag ) 
+                    source_copy = copy.deepcopy(source_mag) 
+                    for layer in lens_copy:
+                        layer['magnitude'] = layer['magnitude'] + lens_offset[b]
+                    for layer in source_copy:
+                        layer['magnitude'] = layer['magnitude'] + source_offset[b]
+                        
+                    sim = SimAPI(numpix=numpix, kwargs_single_band=band,
+                                 kwargs_model=kwargs_model)
+                    
+                    lens_light_amp, source_amp, ps = sim.magnitude2amplitude(kwargs_lens_light_mag=deepcopy(lens_copy),
+                                                                             kwargs_source_mag=deepcopy(source_copy))
+                    # generate image
+                    
+                    imSim = sim.image_model_class(kwargs_numerics)
+                    
+                    image = imSim.image(kwargs_lens=kwargs_lens,
+                                        kwargs_source=source_amp,
+                                        kwargs_lens_light=lens_light_amp)
+                    # add noise
+                    image_noisy = image + sim.noise_for_model(model=image)
+                    band_images.append(image_noisy)
 
-            # extract data kwargs
-            kwargs_data = sim.kwargs_data
-
-            # convert magnitudes into amplitudes
-            kwargs_lens_light, kwargs_source, ps = sim.magnitude2amplitude(kwargs_lens_light_mag=kwargs_lens_light,
-                                                                           kwargs_source_mag=kwargs_source)
-            kwargs_source_amp = deepcopy(kwargs_source)
-
-            source_truth_list.append({
-                'image_index': i,
-                'source_light_model_list': source_model_list_truth,
-                'kwargs_source_mag': kwargs_source_mag,
-                'kwargs_source_amp': kwargs_source_amp,
-            })
-            source_truth_rows.extend(
-                self._source_component_rows(i, source_model_list_truth, kwargs_source_mag, kwargs_source_amp)
-            )
-
-            # generate image
-            imSim = sim.image_model_class(kwargs_numerics)
-            image = imSim.image(kwargs_lens=kwargs_lens,
-                                kwargs_source=kwargs_source,
-                                kwargs_lens_light=kwargs_lens_light)
-            # add noise
-            image_noisy = image + sim.noise_for_model(model=image)
-
-            # update kwargs_data with noisy image
-            kwargs_data['image_data'] = image_noisy
-
-            # append noisy image to list to be saved
-            image_list.append(image_noisy)
-
-            # append hyper-data to list to be saved
-            hyper_list.append([kwargs_data, kwargs_psf, kwargs_numerics])
-
+                #Stack the 3 layers into one imaage
+                rgb_images = np.stack(band_images)
+                image_list.append(rgb_images)
+                        
+            else: 
+                sim = SimAPI(numpix=numpix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model)
+    
+                # extract data kwargs
+                kwargs_data = sim.kwargs_data
+    
+                # convert magnitudes into amplitudes
+                kwargs_lens_light, kwargs_source, ps = sim.magnitude2amplitude(kwargs_lens_light_mag=kwargs_lens_light,
+                                                                               kwargs_source_mag=kwargs_source)
+                kwargs_source_amp = deepcopy(kwargs_source)
+    
+                source_truth_list.append({
+                    'image_index': i,
+                    'source_light_model_list': source_model_list_truth,
+                    'kwargs_source_mag': kwargs_source_mag,
+                    'kwargs_source_amp': kwargs_source_amp,
+                })
+                source_truth_rows.extend(
+                    self._source_component_rows(i, source_model_list_truth, kwargs_source_mag, kwargs_source_amp)
+                )
+    
+                # generate image
+                imSim = sim.image_model_class(kwargs_numerics)
+                image = imSim.image(kwargs_lens=kwargs_lens,
+                                    kwargs_source=kwargs_source,
+                                    kwargs_lens_light=kwargs_lens_light)
+                # add noise
+                image_noisy = image + sim.noise_for_model(model=image)
+    
+                # update kwargs_data with noisy image
+                kwargs_data['image_data'] = image_noisy
+    
+                # append noisy image to list to be saved
+                image_list.append(image_noisy)
+    
+                # append hyper-data to list to be saved
+                hyper_list.append([kwargs_data, kwargs_psf, kwargs_numerics])
+    
             # save the image data (list of arrays) to file for plotting
             image_filename = str(path)+'/datasets/'+str(image_settings['image_name'])+'_image_list.pickle'
             image_outfile = open(image_filename,'wb')
@@ -324,6 +383,5 @@ class Image:
             str(path) + '/datasets/' + str(image_settings['image_name']) + '_source_truth.csv',
             index=False,
         )
-
-
+        
         return None
