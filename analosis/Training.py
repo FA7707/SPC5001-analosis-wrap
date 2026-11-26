@@ -11,6 +11,7 @@ from sklearn import metrics
 import os
 import CNN
 from image_settings import generate
+import export
 
 run = 'Train'
 st.markdown("<h1 style='text-align: center;'>Training model</h1>", unsafe_allow_html=True)
@@ -51,22 +52,21 @@ if st.button("Train", type="primary", width="stretch"):
     with st.spinner("Generating non lenses"):
         generate('Non lens', non_lens, non_lens_seed, telescope, run)
     st.success("Training images generated")
+    with st.spinner("Exporting images"):
+        export.export(run)
+    st.success("Images exported")
+    with st.spinner("Training images"):
+        X_prescaled, y = CNN.load_files(run)
+        noise = CNN.measuring_noise(X_prescaled)
+        X = CNN.preprocessing(X_prescaled, noise)
+        X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = CNN.tensors(X, y)
+        cnn = CNN.build_model()
+        cnn, J_train, J_val, acc_train, acc_val = CNN.train(cnn, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs = 100, lr = 0.002)
+        CNN.matrix(X_val_t, y_val, cnn)
+    st.success("Images trained")
+    st.write(X_prescaled.shape, y.shape)
+    
 
-    path = ["results/datasets/Ring_eval_image_list.pickle", "results/datasets/Arc_lens_eval_image_list.pickle", "results/datasets/Multi_lens_eval_image_list.pickle", "results/datasets/Non_lens_eval_image_list.pickle"]
-    
-    images = {}
-    for file_path in path:
-        name = file_path.replace("results/datasets/", "").replace("_eval_image_list.pickle", "")
-        with open(file_path, 'rb') as f:
-            images[name] = pickle.load(f)
-    
-    all_images = []
-    labels = []
-    
-    codes = {'Ring': 0, 'Arc_lens': 1, 'Multi_lens': 2, 'Non_lens': 3}
-    for name, batch in images.items():
-        all_images.extend(batch)
-        labels.extend([codes[name]] * len(batch))
 
     
 

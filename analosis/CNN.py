@@ -8,17 +8,17 @@ from sklearn import metrics
 BLUE, ORANGE, GREY = "#2a78d6", "#eb6834", "#52514e"
 path = "evaluation"
 
-def load_files():
-    df = pd.read_csv("results/Cleaned_datasets/labels.csv")
+def load_files(run):
+    df = pd.read_csv(f"results/Cleaned_datasets/labels_{run}.csv")
     images = []
     class_ = {'Ring': 0, 'Arc_lens' : 1, 'Multi_lens' : 2, 'Non_lens' : 3}
     for i in df['Filename']:
-        file = "results/images/" + i
+        file = f"results/images/{run}/" + i
         images.append(np.load(file))
     y = np.array(df.Class.map(class_))
     X_prescaled = np.stack(images)
     return X_prescaled, y
-    
+
 def measuring_noise(X_prescaled):
     os.makedirs(path, exist_ok=True)
     noise = np.std(X_prescaled[:, :10, : 10])
@@ -165,7 +165,7 @@ def matrix(X_val_t, y_val, cnn):
     plt.show()
 
 if __name__ == "__main__":
-    X_prescaled, y = load_files()
+    X_prescaled, y = load_files("Train")
     noise = measuring_noise(X_prescaled)
     X = preprocessing(X_prescaled, noise)
     X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = tensors(X, y)
