@@ -141,9 +141,9 @@ def train(cnn, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs = 100, lr = 0.00
     torch.save(cnn.state_dict(), os.path.join(path,'Model_weights.pt'))
     return(cnn, J_train, J_val, acc_train, acc_val)
 
-def matrix(X_val_t, y_val, cnn):
+def matrix(X_val_t, y_val, cnn, title):
     with torch.no_grad():
-        y_pred = (cnn(X_val_t).numpy().argmax(axis = 1))
+        y_pred = (cnn(X_val_t).cpu().numpy().argmax(axis = 1))
     actual = y_val
     predicted = y_pred
     confusion_matrix = metrics.confusion_matrix(actual, predicted)
@@ -151,17 +151,26 @@ def matrix(X_val_t, y_val, cnn):
     df_matrix_values = pd.DataFrame()
     df_matrix_values['Actual'] = actual
     df_matrix_values['Predicted'] = predicted
-    df_matrix_values.to_csv(os.path.join(path,'Matrix_values.csv'), index=False)
+    df_matrix_values.to_csv(os.path.join(path,f'Matrix_values_{title}.csv'), index=False)
     
     fig, ax = plt.subplots(figsize=(6, 5)) 
     cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix = confusion_matrix, display_labels = ['Ring', 'Arc_lens', 'Multi_lens', 'Non_lens'])
     cm_display.plot(ax=ax)
-    ax.set_title("CNN confusion matrix (validation set)", fontsize=14, pad=12)
+    ax.set_title(f"CNN confusion matrix ({title} set)", fontsize=14, pad=12)
     ax.set_xlabel("Predicted label", labelpad=10)
     ax.set_ylabel("True label", labelpad=10)
     plt.tight_layout()
-    plt.savefig(os.path.join(path,'CNN Confusion Matrix.png'), dpi=300)
+    plt.savefig(os.path.join(path,f'CNN Confusion Matrix {title}.png'), dpi=300)
     return fig
+
+def load_noise():
+    df = pd.read_csv(os.path.join(path,'noise.csv'))
+    saved_noise = df['Noise'][0]
+    return saved_noise
+
+def load_model():
+    return os.path.join(path,'Model_weights.pt')
+    
 
 if __name__ == "__main__":
     X_prescaled, y = load_files("Train")
@@ -170,6 +179,6 @@ if __name__ == "__main__":
     X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = tensors(X, y)
     cnn = build_model()
     cnn, J_train, J_val, acc_train, acc_val = train(cnn, X_train_t, y_train_t, X_val_t, y_val_t)
-    matrix_fig = matrix(X_val_t, y_val, cnn)
+    matrix_fig = matrix(X_val_t, y_val, cnn, title)
     curve_fig = plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({count_parameters(cnn)} parameters)")
     plt.show()
