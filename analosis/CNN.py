@@ -101,7 +101,7 @@ def plot_curves(J_train, J_val, acc_train, acc_val, title=""):
     axs[1].set_xlabel("epoch"); axs[1].set_ylabel("accuracy (%)"); axs[1].set_ylim(20, 102); axs[1].legend()
     fig.suptitle(title); plt.tight_layout()
     plt.savefig(os.path.join(path,'Cost curve.png'), dpi=300)
-    plt.show()
+    return fig
 
 def count_parameters(model):
     """Total number of weights and biases in the model."""
@@ -138,7 +138,6 @@ def train(cnn, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs = 100, lr = 0.00
     
     print(f"final training cost {J_train[-1]:.3f},  final validation cost {J_val[-1]:.3f}")
     print(f"final training accuracy {acc_train[-1]:.3f},  final validation accuracy {acc_val[-1]:.3f}")
-    plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({count_parameters(cnn)} parameters)")
     torch.save(cnn.state_dict(), os.path.join(path,'Model_weights.pt'))
     return(cnn, J_train, J_val, acc_train, acc_val)
 
@@ -162,7 +161,7 @@ def matrix(X_val_t, y_val, cnn):
     ax.set_ylabel("True label", labelpad=10)
     plt.tight_layout()
     plt.savefig(os.path.join(path,'CNN Confusion Matrix.png'), dpi=300)
-    plt.show()
+    return fig
 
 if __name__ == "__main__":
     X_prescaled, y = load_files("Train")
@@ -171,4 +170,6 @@ if __name__ == "__main__":
     X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = tensors(X, y)
     cnn = build_model()
     cnn, J_train, J_val, acc_train, acc_val = train(cnn, X_train_t, y_train_t, X_val_t, y_val_t)
-    matrix(X_val_t, y_val, cnn)
+    matrix_fig = matrix(X_val_t, y_val, cnn)
+    curve_fig = plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({count_parameters(cnn)} parameters)")
+    plt.show()

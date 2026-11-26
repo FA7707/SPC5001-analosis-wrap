@@ -62,9 +62,14 @@ if st.button("Train", type="primary", width="stretch"):
         X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = CNN.tensors(X, y)
         cnn = CNN.build_model()
         cnn, J_train, J_val, acc_train, acc_val = CNN.train(cnn, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs = 100, lr = 0.002)
-        CNN.matrix(X_val_t, y_val, cnn)
+        matrix_fig = CNN.matrix(X_val_t, y_val, cnn)
+        curve_fig = CNN.plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({CNN.count_parameters(cnn)} parameters)")
+        st.divider()
+        st.pyplot(curve_fig)
+        st.divider()
+        st.pyplot(matrix_fig)
+        st.divider()
     st.success("Images trained")
-    st.write(X_prescaled.shape, y.shape)
     
 
 
