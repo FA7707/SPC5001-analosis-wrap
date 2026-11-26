@@ -10,13 +10,13 @@ random.seed(165)
 cosmology = {'id': 'planck18', 'H0': 67.4, 'Om': 0.315}
 
 image_settings = {'generate_image': True,
-                  'number_of_images': 100,
+                  'number_of_images': 500,
                   'image_name': 'Non_lens',
                   'lens_light': True,
                   'source': False, # False = no background galaxy (non-lens images)
                   'truth_model': 'boxydisky',
                   'a4_max': 0.1,
-                  'telescope': 'Roman',
+                  'telescope': 'HST',
                   'band': None,
                   'maximum_shear': 0.025, # any larger means gamma_LOS > 0.05 which is challenging for the MCMC
                   'Einstein_radius_min': 0.5, # arcsec

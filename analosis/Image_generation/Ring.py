@@ -10,13 +10,13 @@ random.seed(1)
 cosmology = {'id': 'planck18', 'H0': 67.4, 'Om': 0.315}
 
 image_settings = {'generate_image': True,
-                  'number_of_images': 100,
+                  'number_of_images': 500,
                   'image_name': 'Ring',
                   'lens_light': True,
                   'source': True, # False = no background galaxy (non-lens images)
                   'truth_model': 'boxydisky',
                   'a4_max': 0.1,
-                  'telescope': 'Roman',
+                  'telescope': 'HST',
                   'band': None,
                   'maximum_shear': 0.025, # any larger means gamma_LOS > 0.05 which is challenging for the MCMC
                   'Einstein_radius_min': 0.5, # arcsec
@@ -45,5 +45,5 @@ path = result.pathfinder()
 from analosis.analysis.plots import Plots
 p = Plots(cosmology, path)
 
-p.image_plot(path, image_settings, number_of_columns=8, u_max=10, save=False, show=False)
+#p.image_plot(path, image_settings, number_of_columns=8, u_max=10, save=False, show=False)
 
