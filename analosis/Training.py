@@ -1,14 +1,6 @@
 import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 import sys
 sys.path.append('../')
-import pickle
-import torch
-import torch.nn as nn
-from sklearn import metrics
-import os
 import CNN
 from image_settings import generate
 import export
@@ -41,6 +33,17 @@ with non_col:
     st.markdown("**Non lens**")
     non_lens= st.number_input("Images", key="Non lens1", min_value=20, max_value=10000, value=20)
     non_lens_seed= st.number_input("Seed", key="Non lens2", value=40)
+st.divider()
+
+st.subheader("Training")
+learning_rate, epochs = st.columns(2)
+with learning_rate:
+    st.markdown("**Learning rate**")
+    lr = st.number_input("Learning rate", key="Learning rate", min_value=0.0, max_value=1.0, value=0.002, label_visibility="collapsed",format="%.4f")
+
+with epochs:
+    st.markdown("**Epochs**")
+    n_epochs= st.number_input("Number of Epochs", key="Epochs", min_value=1, max_value=10000, value=100, label_visibility="collapsed")
 
 if st.button("Train", type="primary", width="stretch"):
     with st.spinner("Generating Einstein rings"):
@@ -61,7 +64,7 @@ if st.button("Train", type="primary", width="stretch"):
         X = CNN.preprocessing(X_prescaled, noise)
         X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = CNN.tensors(X, y)
         cnn = CNN.build_model()
-        cnn, J_train, J_val, acc_train, acc_val = CNN.train(cnn, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs = 100, lr = 0.002)
+        cnn, J_train, J_val, acc_train, acc_val = CNN.train(cnn, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs, lr)
         matrix_fig = CNN.matrix(X_val_t, y_val, cnn)
         curve_fig = CNN.plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({CNN.count_parameters(cnn)} parameters)")
         st.divider()
