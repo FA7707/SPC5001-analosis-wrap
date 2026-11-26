@@ -161,16 +161,12 @@ def matrix(X_val_t, y_val, cnn, title):
     ax.set_ylabel("True label", labelpad=10)
     plt.tight_layout()
     plt.savefig(os.path.join(path,f'CNN Confusion Matrix {title}.png'), dpi=300)
-    return fig
+    return (fig, actual, predicted)
 
 def load_noise():
     df = pd.read_csv(os.path.join(path,'noise.csv'))
     saved_noise = df['Noise'][0]
-    return saved_noise
-
-def load_model():
-    return os.path.join(path,'Model_weights.pt')
-    
+    return saved_noise 
 
 if __name__ == "__main__":
     X_prescaled, y = load_files("Train")
@@ -179,6 +175,6 @@ if __name__ == "__main__":
     X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = tensors(X, y)
     cnn = build_model()
     cnn, J_train, J_val, acc_train, acc_val = train(cnn, X_train_t, y_train_t, X_val_t, y_val_t)
-    matrix_fig = matrix(X_val_t, y_val, cnn, title)
+    fig, actual, predicted = matrix(X_val_t, y_val, cnn, 'Test')
     curve_fig = plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({count_parameters(cnn)} parameters)")
     plt.show()

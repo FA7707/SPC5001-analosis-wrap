@@ -14,3 +14,12 @@ for i in images:
     
 np.moveaxis(images, 0, -1)
 np.arcsinh(images)
+
+def view_images(run):
+    path = [f"results/datasets/Arc_lens_{run}_image_list.pickle", f"results/datasets/Non_lens_{run}_image_list.pickle", f"results/datasets/Ring_image_{run}_list.pickle", f"results/datasets/Multi_lens_{run}image_list.pickle"]
+    for i in path:
+        with open(i, 'rb') as f:
+        images = pickle.load(f)
+
+        
+    

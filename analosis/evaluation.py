@@ -5,6 +5,9 @@ import CNN
 from image_settings import generate
 import export
 import torch
+import matplotlib.pyplot as plt
+from sklearn import metrics
+import pandas as pd
 
 run = 'Test'
 st.markdown("<h1 style='text-align: center;'>Testing model</h1>", unsafe_allow_html=True)
@@ -66,13 +69,25 @@ if st.button("Test", type="primary", width="stretch"):
         cnn.to(device)
         cnn.eval()
 
-        with torch.no_grad():
-            out = cnn(X_test)                          
-        preds = out.cpu().numpy().argmax(axis=1)
-    matrix_fig = CNN.matrix(X_test, y, cnn, 'Testing')
+    matrix_fig, actual, preds = CNN.matrix(X_test, y, cnn, "Testing")
     st.pyplot(matrix_fig)
+
+    fig, axs = plt.subplots(4, 10, figsize=(15, 6))
+    for row in range(4):
+        chosen = X[y == row][:10]
+        for col in range(10):
+            axs[row, col].imshow(chosen[col], cmap="bone", origin="lower", vmin=-1, vmax=5)
+            axs[row, col].axis("off")
+    st.pyplot(fig)
+    st.divider()
     
-    
+    accuracy = metrics.accuracy_score(actual, preds)
+    precision = metrics.precision_score(actual, preds, average=None)
+    recall = metrics.recall_score(actual, preds, average=None)
+    f1 = metrics.f1_score(actual, preds, average=None)
+    st.markdown(f"**Accuracy:** {accuracy * 100:.1f}%")
+    results = pd.DataFrame({"Precision": precision, "Recall": recall, "F1 score": f1}, index=["Ring", "Arc_lens", "Multi_lens", "Non_lens"])
+    st.dataframe((results * 100).round(1))
 
 
     

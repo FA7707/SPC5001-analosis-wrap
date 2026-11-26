@@ -4,6 +4,9 @@ sys.path.append('../')
 import CNN
 from image_settings import generate
 import export
+import matplotlib.pyplot as plt
+from sklearn import metrics
+import pandas as pd
 
 run = 'Train'
 st.markdown("<h1 style='text-align: center;'>Training model</h1>", unsafe_allow_html=True)
@@ -65,14 +68,31 @@ if st.button("Train", type="primary", width="stretch"):
         X_train_t, y_train_t, X_val_t, y_val_t, X_test_t, y_test_t, y_val = CNN.tensors(X, y)
         cnn = CNN.build_model()
         cnn, J_train, J_val, acc_train, acc_val = CNN.train(cnn, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs, lr)
-        matrix_fig = CNN.matrix(X_val_t, y_val, cnn, 'Training')
+        matrix_fig, actual, preds = CNN.matrix(X_val_t, y_val, cnn, "Validation")
         curve_fig = CNN.plot_curves(J_train, J_val, acc_train, acc_val, f"CNN ({CNN.count_parameters(cnn)} parameters)")
         st.divider()
         st.pyplot(curve_fig)
         st.divider()
         st.pyplot(matrix_fig)
         st.divider()
-    st.success("Images trained")
+        
+    fig, axs = plt.subplots(4, 10, figsize=(15, 6))
+    for row in range(4):
+        chosen = X[y == row][:10]
+        for col in range(10):
+            axs[row, col].imshow(chosen[col], cmap="bone", origin="lower", vmin=-1, vmax=5)
+            axs[row, col].axis("off")
+    st.pyplot(fig)
+    st.divider()
+        
+    accuracy = metrics.accuracy_score(actual, preds)
+    precision = metrics.precision_score(actual, preds, average=None)
+    recall = metrics.recall_score(actual, preds, average=None)
+    f1 = metrics.f1_score(actual, preds, average=None)
+    st.markdown(f"**Accuracy:** {accuracy * 100:.1f}%")
+    results = pd.DataFrame({"Precision": precision, "Recall": recall, "F1 score": f1}, index=["Ring", "Arc_lens", "Multi_lens", "Non_lens"])
+    st.dataframe((results * 100).round(1))
+    
     
 
 
